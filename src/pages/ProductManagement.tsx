@@ -11,6 +11,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { OrderForm } from "../components/OrderForm";
 
 type SortKey = "name" | "price";
 type SortOrder = "asc" | "desc";
@@ -21,6 +22,7 @@ export const ProductManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOrder, setIsModalOrder] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -78,6 +80,12 @@ export const ProductManagement = () => {
     fetchProducts(currentPage);
   };
 
+  const handleFormOrderSubmit = () => {
+    setIsModalOrder(false);
+    setEditingProduct(undefined);
+    fetchProducts(currentPage);
+  };
+
   // Handle delete
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
@@ -102,6 +110,11 @@ export const ProductManagement = () => {
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsModalOpen(true);
+  };
+
+  const handleEditOrder = (product: Product) => {
+    setIsModalOrder(true);
+    setEditingProduct(product);
   };
 
   if (!["Admin", "Manager", "Employee"].includes(user?.role || "")) return null;
@@ -226,7 +239,7 @@ export const ProductManagement = () => {
                     {user?.role == "Employee" && (
                       <>
                         <button
-                          onClick={() => handleEdit(product)}
+                          onClick={() => handleEditOrder(product)}
                           className="text-blue-600 hover:text-blue-800 transition-all duration-200 transform hover:scale-110 focus:outline-none"
                           title="Edit"
                         >
@@ -286,6 +299,19 @@ export const ProductManagement = () => {
               product={editingProduct}
               onSuccess={handleFormSubmit}
               onCancel={() => setIsModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {isModalOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
+
+            <OrderForm
+              product={editingProduct}
+              onSuccess={handleFormOrderSubmit}
+              onCancel={() => setIsModalOrder(false)}
             />
           </div>
         </div>

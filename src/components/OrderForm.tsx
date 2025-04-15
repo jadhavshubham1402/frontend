@@ -1,54 +1,47 @@
-import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../redux/store';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { createOrder, getAllProducts } from '../services/api';
-import { Product } from '../types';
-import { errorToast, successToast } from '../toastConfig';
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { createOrder, getAllProducts } from "../services/api";
+import { Product } from "../types";
+import { errorToast, successToast } from "../toastConfig";
+import { useNavigate } from "react-router-dom";
 
 interface OrderFormValues {
   customerName: string;
-  productId: string;
 }
 
-export const OrderForm = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+export const OrderForm = ({ product, onSuccess, onCancel }: any) => {
   const { user } = useSelector((state: RootState) => state.auth);
-
-  useEffect(() => {
-    if (user?.role === 'Employee') {
-      getAllProducts({ page: 1 })
-        .then(({ data }) => {
-          setProducts(data.data);
-        })
-        .catch(() => errorToast('Failed to fetch products'));
-    }
-  }, [user]);
+  const navigate = useNavigate();
 
   const initialValues: OrderFormValues = {
-    customerName: '',
-    productId: '',
+    customerName: "",
   };
 
   const validationSchema = Yup.object({
-    customerName: Yup.string().required('Customer name is required'),
-    productId: Yup.string().required('Product is required'),
+    customerName: Yup.string().required("Customer name is required"),
   });
 
-  const handleSubmit = async (values: OrderFormValues, { setSubmitting, resetForm }: any) => {
+  const handleSubmit = async (
+    values: OrderFormValues,
+    { setSubmitting, resetForm }: any
+  ) => {
     try {
-      await createOrder(values);
-      successToast('Order placed successfully');
+      await createOrder({ ...values, productId: product._id });
+      successToast("Order placed successfully");
+      onSuccess();
+      navigate("/orders");
       resetForm();
     } catch (err: any) {
-      errorToast(err.response?.data?.message || 'Failed to place order');
+      errorToast(err.response?.data?.message || "Failed to place order");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (user?.role !== 'Employee') return null;
+  if (user?.role !== "Employee") return null;
 
   return (
     <div className="card mb-8">
@@ -79,39 +72,22 @@ export const OrderForm = () => {
                 className="text-red-500 text-sm mt-1"
               />
             </div>
-            <div className="mb-5">
-              <label
-                htmlFor="productId"
-                className="block text-sm font-medium text-gray-700 mb-1"
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50"
               >
-                Product
-              </label>
-              <Field
-                as="select"
-                name="productId"
-                id="productId"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                {isSubmitting ? "Placing..." : "Place Order"}
+              </button>
+              <button
+                type="button"
+                className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-400 hover:text-gray-900 transition-all duration-300 transform hover:scale-105"
+                onClick={() => onCancel()}
               >
-                <option value="">Select Product</option>
-                {products.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Field>
-              <ErrorMessage
-                name="productId"
-                component="p"
-                className="text-red-500 text-sm mt-1"
-              />
+                Close
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full disabled:opacity-50"
-            >
-              {isSubmitting ? 'Placing...' : 'Place Order'}
-            </button>
           </Form>
         )}
       </Formik>
