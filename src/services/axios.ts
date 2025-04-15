@@ -6,7 +6,7 @@ import { errorToast } from '../toastConfig';
 const publicApisPath = ['/api/login'];
 
 const Axios = axios.create({
-  baseURL: "http://localhost:5000/",
+  baseURL: "http://13.232.53.210/api/",
 });
 
 Axios.interceptors.request.use(
