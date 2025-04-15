@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { getAllProducts, deleteProduct } from "../services/api";
@@ -30,31 +30,35 @@ export const ProductManagement = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   // Fetch products
-  const fetchProducts = async (page: number) => {
-    try {
-      setError("");
-      const params = {
-        page,
-        sortBy: sortKey,
-        sortOrder,
-        search: searchQuery,
-      };
-      const { data } = await getAllProducts(params);
-      setProducts(Array.isArray(data.data.data) ? data.data.data : []);
-      setTotalPages(data.totalPages || 1);
-      setCurrentPage(page);
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to fetch products";
-      setError(message);
-      setProducts([]);
-      setTotalPages(1);
-      errorToast(message);
-    }
-  };
+  const fetchProducts = useCallback(
+    async (page: number) => {
+      try {
+        setError("");
+        const params = {
+          page,
+          sortBy: sortKey,
+          sortOrder,
+          search: searchQuery,
+        };
+        const { data } = await getAllProducts(params);
+        setProducts(Array.isArray(data.data.data) ? data.data.data : []);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(page);
+      } catch (err: any) {
+        const message =
+          err.response?.data?.message || "Failed to fetch products";
+        setError(message);
+        setProducts([]);
+        setTotalPages(1);
+        errorToast(message);
+      }
+    },
+    [sortKey, sortOrder, searchQuery]
+  );
 
   useEffect(() => {
     fetchProducts(1);
-  }, [sortKey, sortOrder, searchQuery]);
+  }, [sortKey, sortOrder, searchQuery, fetchProducts]);
 
   // Handle sorting
   const handleSort = (key: SortKey) => {
@@ -236,7 +240,7 @@ export const ProductManagement = () => {
                         </button>
                       </>
                     )}
-                    {user?.role == "Employee" && (
+                    {user?.role === "Employee" && (
                       <>
                         <button
                           onClick={() => handleEditOrder(product)}
@@ -307,7 +311,6 @@ export const ProductManagement = () => {
       {isModalOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
-
             <OrderForm
               product={editingProduct}
               onSuccess={handleFormOrderSubmit}

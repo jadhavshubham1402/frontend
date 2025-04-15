@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { getAllOrders, updateOrder } from "../services/api";
-import { OrderForm } from "../components/OrderForm";
-import { Order } from "../types";
 import { errorToast, successToast } from "../toastConfig";
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { Order } from "../types";
 
 type SortKey = "customerName" | "productName" | "employeeName" | "status";
 type SortOrder = "asc" | "desc";
@@ -19,32 +18,35 @@ export const OrderManagement = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const fetchOrders = async (page: number) => {
-    try {
-      setError("");
-      const params = {
-        page,
-        sortBy: sortKey,
-        sortOrder,
-      };
-      const { data } = await getAllOrders(params);
-      setOrders(Array.isArray(data.data.data) ? data.data.data : []);
-      setTotalPages(data.totalPages || 1);
-      setCurrentPage(page);
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to fetch orders";
-      setError(message);
-      setOrders([]);
-      setTotalPages(1);
-      errorToast(message);
-    }
-  };
+  const fetchOrders = useCallback(
+    async (page: number) => {
+      try {
+        setError("");
+        const params = {
+          page,
+          sortBy: sortKey,
+          sortOrder,
+        };
+        const { data } = await getAllOrders(params);
+        setOrders(Array.isArray(data.data.data) ? data.data.data : []);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(page);
+      } catch (err: any) {
+        const message = err.response?.data?.message || "Failed to fetch orders";
+        setError(message);
+        setOrders([]);
+        setTotalPages(1);
+        errorToast(message);
+      }
+    },
+    [sortKey, sortOrder]
+  );
 
   useEffect(() => {
     if (["Manager", "Employee"].includes(user?.role || "")) {
       fetchOrders(1);
     }
-  }, [user, sortKey, sortOrder]);
+  }, [user, sortKey, sortOrder, fetchOrders]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -165,7 +167,7 @@ export const OrderManagement = () => {
                       {order.status}
                     </span>
                   </td>
-                  {user?.role === "Manager" && order.status == "Pending" && (
+                  {user?.role === "Manager" && order.status === "Pending" && (
                     <td className="py-3 px-4 flex space-x-2">
                       <button
                         onClick={() =>

@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { ErrorMessage, Field, Form, Formik } from "formik";
 import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { createOrder, getAllProducts } from "../services/api";
-import { Product } from "../types";
-import { errorToast, successToast } from "../toastConfig";
 import { useNavigate } from "react-router-dom";
+import * as Yup from "yup";
+import { RootState } from "../redux/store";
+import { createOrder } from "../services/api";
+import { errorToast, successToast } from "../toastConfig";
 
 interface OrderFormValues {
   customerName: string;
